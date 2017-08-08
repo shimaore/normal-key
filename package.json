@@ -4,6 +4,7 @@
   "description": "Redis client extensions for CCNQ4",
   "scripts": {
     "prepublish": "coffee -c *.coffee.md",
+    "pretest": "npm run prepublish",
     "test": "mocha"
   },
   "repository": {
