@@ -53,6 +53,20 @@ Properties
             .catch -> yes
         yield @expire key
 
+    mapping: seem (key) ->
+      @first seem (redis) ->
+        result = {}
+        cursor = 0
+        while cursor isnt '0'
+          [cursor,elements] = yield redis.hscanAsync key, cursor
+          for [k,v] in elements
+            result[k] = v
+
+        result
+
+Sets
+----
+
       add: seem (key,value) ->
         return unless value?
         yield @all (redis) ->
@@ -97,6 +111,9 @@ Properties
               catch error
                 debug.dev "forEach cb on #{key}: #{error.stack ? error}"
           return
+
+Sorted Sets
+-----------
 
       sorted_add: seem (key,value,score = 0) ->
         return unless value?
