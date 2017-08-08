@@ -7,7 +7,6 @@ This is a base class, meant to be implemented in a child class that adds the `re
 
     class RedisClient
       constructor: (@class_name,@key) ->
-        debug 'new RedisClient', @class_name, @key
 
         throw new Error "RedisClient expects class name as first parameter" unless @class_name?
         throw new Error "RedisClient expects key as second parameter" unless @key?
