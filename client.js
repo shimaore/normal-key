@@ -8,7 +8,6 @@
     function RedisClient(class_name, key) {
       this.class_name = class_name;
       this.key = key;
-      debug('new RedisClient', this.class_name, this.key);
       if (this.class_name == null) {
         throw new Error("RedisClient expects class name as first parameter");
       }
