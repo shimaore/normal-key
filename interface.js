@@ -58,7 +58,7 @@
 
     RedisInterface.prototype.get = function(key, name) {
       return this.first(function(redis) {
-        return redis.getAsync(key, name);
+        return redis.hgetAsync(key, name);
       });
     };
 
