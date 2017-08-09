@@ -74,7 +74,7 @@ Ordered-Set
       sorted_count: ->
         @redis.sorted_count @__zset_key
 
-      sorted_forEach: seem (cb) ->
+      sorted_forEach: (cb) ->
         @redis.sorted_forEach @__zset_key, cb
 
 Tags
