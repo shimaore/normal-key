@@ -95,9 +95,9 @@
       return this.redis.sorted_count(this.__zset_key);
     };
 
-    RedisClient.prototype.sorted_forEach = seem(function(cb) {
+    RedisClient.prototype.sorted_forEach = function(cb) {
       return this.redis.sorted_forEach(this.__zset_key, cb);
-    });
+    };
 
     RedisClient.prototype.add_tag = function(tag) {
       return this.redis.add(this.__tag_key, tag);
