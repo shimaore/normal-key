@@ -59,9 +59,9 @@
       return this.redis.clear(this.__set_key);
     };
 
-    RedisClient.prototype.forEach = seem(function(cb) {
+    RedisClient.prototype.forEach = function(cb) {
       return this.redis.forEach(this.__set_key, cb);
-    });
+    };
 
     RedisClient.prototype.sorted_add = function(value, score) {
       if (score == null) {
