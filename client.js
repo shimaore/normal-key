@@ -67,14 +67,14 @@
       if (score == null) {
         score = 0;
       }
-      return this.redis.sorted_add(this.__zset_key, score, value);
+      return this.redis.sorted_add(this.__zset_key, value, score);
     };
 
     RedisClient.prototype.sorted_incr = function(value, delta) {
       if (delta == null) {
         delta = 1;
       }
-      return this.redis.sorted_incr(this.__zset_key, delta, value);
+      return this.redis.sorted_incr(this.__zset_key, value, delta);
     };
 
     RedisClient.prototype.sorted_remove = function(value) {
