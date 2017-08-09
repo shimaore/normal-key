@@ -20,6 +20,7 @@ Meta-manipulators
           try
             v = yield cb redis
             return v
+        return
 
 Expire tool
 
@@ -45,7 +46,7 @@ Properties
 
       get: (key,name) ->
         @first (redis) ->
-          redis.getAsync key, name
+          redis.hgetAsync key, name
 
       incr: seem (key,property,increment = 1) ->
         yield @all (redis) ->
