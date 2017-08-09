@@ -3,8 +3,6 @@ RedisClient
 
 This is a base class, meant to be implemented in a child class that adds the `redis` field, which should be a RedisInterface instance.
 
-    seem = require 'seem'
-
     class RedisClient
       constructor: (@class_name,@key) ->
 
@@ -87,16 +85,16 @@ Tags
         if tags.length > 0
           @redis.add @__tag_key, tags
 
-      del_tag: seem (tag) ->
+      del_tag: (tag) ->
         @redis.remove @__tag_key, tag
 
-      clear_tags: seem ->
+      clear_tags: ->
         @redis.clear @__tag_key
 
-      tags: seem ->
+      tags: ->
         @redis.members @__tag_key
 
-      has_tag: seem (tag) ->
+      has_tag: (tag) ->
         @redis.has @__tag_key, tag
 
     module.exports = RedisClient
