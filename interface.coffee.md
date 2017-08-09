@@ -53,16 +53,16 @@ Properties
             .catch -> yes
         yield @expire key
 
-    mapping: seem (key) ->
-      @first seem (redis) ->
-        result = {}
-        cursor = 0
-        while cursor isnt '0'
-          [cursor,elements] = yield redis.hscanAsync key, cursor
-          for [k,v] in elements
-            result[k] = v
+      mapping: seem (key) ->
+        @first seem (redis) ->
+          result = {}
+          cursor = 0
+          while cursor isnt '0'
+            [cursor,elements] = yield redis.hscanAsync key, cursor
+            for [k,v] in elements
+              result[k] = v
 
-        result
+          result
 
 Sets
 ----
