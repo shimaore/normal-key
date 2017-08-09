@@ -56,10 +56,10 @@ Ordered-Set
 ---
 
       sorted_add: (value,score = 0) ->
-        @redis.sorted_add @__zset_key, score, value
+        @redis.sorted_add @__zset_key, value, score
 
       sorted_incr: (value,delta = 1) ->
-        @redis.sorted_incr @__zset_key, delta, value
+        @redis.sorted_incr @__zset_key, value, delta
 
       sorted_remove: (value) ->
         @redis.sorted_remove @__zset_key, value
