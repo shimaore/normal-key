@@ -49,7 +49,7 @@ Set
       clear: ->
         @redis.clear @__set_key
 
-      forEach: seem (cb) ->
+      forEach: (cb) ->
         @redis.forEach @__set_key, cb
 
 Ordered-Set
