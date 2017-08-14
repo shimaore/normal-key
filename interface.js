@@ -14,12 +14,14 @@
     RedisInterface.prototype.timeout = 24 * 3600;
 
     RedisInterface.prototype.all = function(cb) {
-      return Promise.all(this.redises.map(cb.bind(this)));
+      return Promise.all(this.redises.map(cb));
     };
 
     RedisInterface.prototype.multi = function(key, cb) {
+      var timeout;
+      timeout = this.timeout;
       return this.all(function(redis) {
-        return cb(redis.multi()).expire(key, this.timeout).exec()["catch"](function() {
+        return cb.call(redis.multi()).expire(key, timeout).exec()["catch"](function() {
           return true;
         });
       });
@@ -27,12 +29,11 @@
 
     RedisInterface.prototype.first = seem(function*(cb) {
       var i, len, redis, ref, v;
-      cb.bind(this);
       ref = this.redises;
       for (i = 0, len = ref.length; i < len; i++) {
         redis = ref[i];
         try {
-          v = (yield cb(redis));
+          v = (yield cb.call(redis));
           return v;
         } catch (error1) {}
       }
@@ -40,8 +41,8 @@
 
     RedisInterface.prototype.set = function(key, name, value) {
       if (value != null) {
-        return this.multi(function(key, redis) {
-          return redis.hset(key, name, value);
+        return this.multi(key, function() {
+          return this.hset(key, name, value);
         });
       } else {
         return this.all(function(redis) {
@@ -53,8 +54,8 @@
     };
 
     RedisInterface.prototype.get = function(key, name) {
-      return this.first(function(redis) {
-        return redis.hget(key, name);
+      return this.first(function() {
+        return this.hget(key, name);
       });
     };
 
@@ -62,18 +63,18 @@
       if (increment == null) {
         increment = 1;
       }
-      return this.multi(function(key, redis) {
-        return redis.hincrby(key, property, increment);
+      return this.multi(key, function() {
+        return this.hincrby(key, property, increment);
       });
     };
 
     RedisInterface.prototype.mapping = function(key) {
-      return this.first(seem(function*(redis) {
+      return this.first(seem(function*() {
         var cursor, elements, i, k, len, ref, ref1, result, v;
         result = {};
         cursor = 0;
         while (cursor !== '0') {
-          ref = (yield redis.hscan(key, cursor)), cursor = ref[0], elements = ref[1];
+          ref = (yield this.hscan(key, cursor)), cursor = ref[0], elements = ref[1];
           for (i = 0, len = elements.length; i < len; i++) {
             ref1 = elements[i], k = ref1[0], v = ref1[1];
             result[k] = v;
@@ -87,8 +88,8 @@
       if (value == null) {
         return;
       }
-      return this.multi(function(key, redis) {
-        return redis.sadd(key, value);
+      return this.multi(key, function() {
+        return this.sadd(key, value);
       });
     };
 
@@ -96,44 +97,50 @@
       if (value == null) {
         return;
       }
-      return this.multi(function(key, redis) {
-        return redis.srem(key, value);
+      return this.multi(key, function() {
+        return this.srem(key, value);
       });
     };
 
-    RedisInterface.prototype.has = function(key, value) {
+    RedisInterface.prototype.has = seem(function*(key, value) {
+      var it;
       if (value == null) {
         return;
       }
-      return this.first(function(redis) {
-        return redis.sismember(key, value);
-      });
-    };
+      it = (yield this.first(function() {
+        return this.sismember(key, value);
+      }));
+      if (it === 1) {
+        return true;
+      } else {
+        return false;
+      }
+    });
 
     RedisInterface.prototype.count = function(key) {
-      return this.first(function(redis) {
-        return redis.scard(key);
+      return this.first(function() {
+        return this.scard(key);
       });
     };
 
     RedisInterface.prototype.members = function(key) {
-      return this.first(function(redis) {
-        return redis.smembers(key);
+      return this.first(function() {
+        return this.smembers(key);
       });
     };
 
-    RedisInterface.prototype.clear = seem(function(key) {
-      return this.multi(function(key, redis) {
-        return redis.sinterstore(key, key + "--emtpy-set--");
+    RedisInterface.prototype.clear = function(key) {
+      return this.multi(key, function() {
+        return this.sinterstore(key, key + "--emtpy-set--");
       });
-    });
+    };
 
     RedisInterface.prototype.forEach = function(key, cb) {
-      return this.first(seem(function*(redis) {
+      return this.first(seem(function*() {
         var cursor, error, i, keys, len, ref, ref1;
         cursor = 0;
         while (cursor !== '0') {
-          ref = (yield redis.sscan(key, cursor)), cursor = ref[0], keys = ref[1];
+          ref = (yield this.sscan(key, cursor)), cursor = ref[0], keys = ref[1];
           for (i = 0, len = keys.length; i < len; i++) {
             key = keys[i];
             try {
@@ -147,60 +154,60 @@
       }));
     };
 
-    RedisInterface.prototype.sorted_add = seem(function(key, value, score) {
+    RedisInterface.prototype.sorted_add = function(key, value, score) {
       if (score == null) {
         score = 0;
       }
       if (value == null) {
         return;
       }
-      return this.multi(function(key, redis) {
-        return redis.zadd(key, score, value);
+      return this.multi(key, function() {
+        return this.zadd(key, score, value);
       });
-    });
+    };
 
-    RedisInterface.prototype.sorted_incr = seem(function(key, value, delta) {
+    RedisInterface.prototype.sorted_incr = function(key, value, delta) {
       if (delta == null) {
         delta = 1;
       }
       if (value == null) {
         return;
       }
-      return this.multi(function(key, redis) {
-        return redis.zincrby(key, delta, value);
+      return this.multi(key, function() {
+        return this.zincrby(key, delta, value);
       });
-    });
+    };
 
-    RedisInterface.prototype.sorted_remove = seem(function(key, value) {
+    RedisInterface.prototype.sorted_remove = function(key, value) {
       if (value == null) {
         return;
       }
-      return this.multi(function(key, redis) {
-        return redis.zrem(key, value);
+      return this.multi(key, function() {
+        return this.zrem(key, value);
       });
-    });
+    };
 
     RedisInterface.prototype.score = function(key, value) {
       if (value == null) {
         return;
       }
-      return this.first(function(redis) {
-        return redis.zscore(key, value);
+      return this.first(function() {
+        return this.zscore(key, value);
       });
     };
 
     RedisInterface.prototype.sorted_count = function(key) {
-      return this.first(function(redis) {
-        return redis.zcard(key);
+      return this.first(function() {
+        return this.zcard(key);
       });
     };
 
     RedisInterface.prototype.sorted_forEach = function(key, cb) {
-      return this.first(seem(function*(redis) {
+      return this.first(seem(function*() {
         var cursor, error, ref, ref1, score, values;
         cursor = 0;
         while (cursor !== '0') {
-          ref = (yield redis.zscan(key, cursor)), cursor = ref[0], values = ref[1];
+          ref = (yield this.zscan(key, cursor)), cursor = ref[0], values = ref[1];
           while (values.length > 1) {
             key = values.shift();
             score = values.shift();
