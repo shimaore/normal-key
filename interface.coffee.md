@@ -3,17 +3,25 @@ RedisInterface
 
     seem = require 'seem'
 
-    debug = (require 'tangible') 'normal-key:client'
+    debug = (require 'tangible') 'normal-key:interface'
 
     class RedisInterface
       constructor: (@redises) ->
 
-      expiry: 4*3600
+      timeout: 24*3600
 
 Meta-manipulators
 
       all: (cb) ->
         Promise.all @redises.map cb
+
+      multi: (key,cb) ->
+        timeout = @timeout
+        @all (redis) ->
+          cb redis.multi()
+          .expire key, timeout
+          .exec()
+          .catch -> yes
 
       first: seem (cb) ->
         for redis in @redises
@@ -22,44 +30,35 @@ Meta-manipulators
             return v
         return
 
-Expire tool
-
-      expire: (key) ->
-        @all (redis) =>
-          redis.expireAsync key, @expiry
-            .catch -> yes
-
 Properties
 ----------
 
-      set: seem (key,name,value) ->
+      set: (key,name,value) ->
         if value?
-          yield @all (redis) ->
-            redis.hsetAsync key, name, value
-              .catch -> yes
+          @multi (key,redis) ->
+            redis
+            .hset key, name, value
         else
-          yield @all (redis) ->
-            redis.hdelAsync key, name
-              .catch -> yes
-
-        yield @expire key
+          @all (redis) ->
+            redis
+            .hdel key, name
+            .catch -> yes
 
       get: (key,name) ->
         @first (redis) ->
-          redis.hgetAsync key, name
+          redis.hget key, name
 
-      incr: seem (key,property,increment = 1) ->
-        yield @all (redis) ->
-          redis.hincrbyAsync key, property, increment
-            .catch -> yes
-        yield @expire key
+      incr: (key,property,increment = 1) ->
+        @multi (key,redis) ->
+          redis
+          .hincrby key, property, increment
 
-      mapping: seem (key) ->
+      mapping: (key) ->
         @first seem (redis) ->
           result = {}
           cursor = 0
           while cursor isnt '0'
-            [cursor,elements] = yield redis.hscanAsync key, cursor
+            [cursor,elements] = yield redis.hscan key, cursor
             for [k,v] in elements
               result[k] = v
 
@@ -68,44 +67,41 @@ Properties
 Sets
 ----
 
-      add: seem (key,value) ->
+      add: (key,value) ->
         return unless value?
-        yield @all (redis) ->
-          redis.saddAsync key, value
-            .catch -> yes
-        yield @expire key
+        @multi (key,redis) ->
+          redis
+          .sadd key, value
 
-      remove: seem (key,value) ->
+      remove: (key,value) ->
         return unless value?
-        yield @all (redis) ->
-          redis.sremAsync key, value
-            .catch -> yes
-        yield @expire key
+        @multi (key,redis) ->
+          redis
+          .srem key, value
 
       has: (key,value) ->
         return unless value?
         @first (redis) ->
-          redis.sismemberAsync key, value
+          redis.sismember key, value
 
       count: (key) ->
         @first (redis) ->
-          redis.scardAsync key
+          redis.scard key
 
       members: (key) ->
         @first (redis) ->
-          redis.smembersAsync key
+          redis.smembers key
 
       clear: seem (key) ->
-        yield @all (redis) ->
-          redis.sinterstoreAsync key, "#{key}--emtpy-set--"
-            .catch -> yes
-        yield @expire key
+        @multi (key,redis) ->
+          redis
+          .sinterstore key, "#{key}--emtpy-set--"
 
       forEach: (key,cb) ->
         @first seem (redis) ->
           cursor = 0
           while cursor isnt '0'
-            [cursor,keys] = yield redis.sscanAsync key, cursor
+            [cursor,keys] = yield redis.sscan key, cursor
             for key in keys
               try
                 yield cb key
@@ -118,39 +114,36 @@ Sorted Sets
 
       sorted_add: seem (key,value,score = 0) ->
         return unless value?
-        yield @all (redis) ->
-          redis.zaddAsync key, score, value
-            .catch -> yes
-        yield @expire key
+        @multi (key,redis) ->
+          redis
+          .zadd key, score, value
 
       sorted_incr: seem (key,value,delta = 1) ->
         return unless value?
-        yield @all (redis) ->
-          redis.zincrbyAsync key, delta, value
-            .catch -> yes
-        yield @expire key
+        @multi (key,redis) ->
+          redis
+          .zincrby key, delta, value
 
       sorted_remove: seem (key,value) ->
         return unless value?
-        yield @all (redis) ->
-          redis.zremAsync key, value
-            .catch -> yes
-        yield @expire key
+        @multi (key,redis) ->
+          redis
+          .zrem key, value
 
       score: (key,value) ->
         return unless value?
         @first (redis) ->
-          redis.zscoreAsync key, value
+          redis.zscore key, value
 
       sorted_count: (key) ->
         @first (redis) ->
-          redis.zcardAsync key
+          redis.zcard key
 
       sorted_forEach: (key,cb) ->
         @first seem (redis) ->
           cursor = 0
           while cursor isnt '0'
-            [cursor,values] = yield redis.zscanAsync key, cursor
+            [cursor,values] = yield redis.zscan key, cursor
 
             while values.length > 1
               key = values.shift()
