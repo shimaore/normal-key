@@ -4,6 +4,4 @@
 
   this.RedisInterface = require('./interface');
 
-  this.Redis = require('./redis');
-
 }).call(this);
