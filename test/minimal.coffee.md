@@ -11,12 +11,14 @@ Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this 
       class TestClient extends RedisClient
         redis: redis
 
-      before seem ->
+      cleanup = seem ->
         client = new TestClient 'Builder', 'Bob'
         yield r.del client.__property_key
         yield r.del client.__set_key
         yield r.del client.__zset_key
         yield r.del client.__tag_key
+      before cleanup
+      after cleanup
 
       it 'should set', ->
         client = new TestClient 'Builder', 'Bob'
