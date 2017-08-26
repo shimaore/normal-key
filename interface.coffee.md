@@ -77,7 +77,7 @@ Sets
         if it is 1 then true else false
 
       count: (key) ->
-        @first -> @scard key
+        @first seem -> parseInt yield @scard key
 
       members: (key) ->
         @first -> @smembers key
