@@ -19,11 +19,11 @@
     }
 
     RedisClient.prototype.get = function(property) {
-      return this.redis.get(this.__property_key, property);
+      return this["interface"].get(this.__property_key, property);
     };
 
     RedisClient.prototype.set = function(property, value) {
-      return this.redis.set(this.__property_key, property, value);
+      return this["interface"].set(this.__property_key, property, value);
     };
 
     RedisClient.prototype.reset = function(property) {
@@ -34,49 +34,49 @@
       if (increment == null) {
         increment = 1;
       }
-      return this.redis.incr(this.__property_key, property, increment);
+      return this["interface"].incr(this.__property_key, property, increment);
     };
 
     RedisClient.prototype.add = function(value) {
-      return this.redis.add(this.__set_key, value);
+      return this["interface"].add(this.__set_key, value);
     };
 
     RedisClient.prototype.remove = function(value) {
-      return this.redis.remove(this.__set_key, value);
+      return this["interface"].remove(this.__set_key, value);
     };
 
     RedisClient.prototype.has = function(value) {
-      return this.redis.has(this.__set_key, value);
+      return this["interface"].has(this.__set_key, value);
     };
 
     RedisClient.prototype.count = function() {
-      return this.redis.count(this.__set_key);
+      return this["interface"].count(this.__set_key);
     };
 
     RedisClient.prototype.clear = function() {
-      return this.redis.clear(this.__set_key);
+      return this["interface"].clear(this.__set_key);
     };
 
     RedisClient.prototype.forEach = function(cb) {
-      return this.redis.forEach(this.__set_key, cb);
+      return this["interface"].forEach(this.__set_key, cb);
     };
 
     RedisClient.prototype.sorted_add = function(value, score) {
       if (score == null) {
         score = 0;
       }
-      return this.redis.sorted_add(this.__zset_key, value, score);
+      return this["interface"].sorted_add(this.__zset_key, value, score);
     };
 
     RedisClient.prototype.sorted_incr = function(value, delta) {
       if (delta == null) {
         delta = 1;
       }
-      return this.redis.sorted_incr(this.__zset_key, value, delta);
+      return this["interface"].sorted_incr(this.__zset_key, value, delta);
     };
 
     RedisClient.prototype.sorted_remove = function(value) {
-      return this.redis.sorted_remove(this.__zset_key, value);
+      return this["interface"].sorted_remove(this.__zset_key, value);
     };
 
     RedisClient.prototype.sorted_has = function(value) {
@@ -86,41 +86,41 @@
     };
 
     RedisClient.prototype.score = function(value) {
-      return this.redis.score(this.__zset_key, value);
+      return this["interface"].score(this.__zset_key, value);
     };
 
     RedisClient.prototype.sorted_count = function() {
-      return this.redis.sorted_count(this.__zset_key);
+      return this["interface"].sorted_count(this.__zset_key);
     };
 
     RedisClient.prototype.sorted_forEach = function(cb) {
-      return this.redis.sorted_forEach(this.__zset_key, cb);
+      return this["interface"].sorted_forEach(this.__zset_key, cb);
     };
 
     RedisClient.prototype.add_tag = function(tag) {
-      return this.redis.add(this.__tag_key, tag);
+      return this["interface"].add(this.__tag_key, tag);
     };
 
     RedisClient.prototype.add_tags = function(tags) {
       if (tags.length > 0) {
-        return this.redis.add(this.__tag_key, tags);
+        return this["interface"].add(this.__tag_key, tags);
       }
     };
 
     RedisClient.prototype.del_tag = function(tag) {
-      return this.redis.remove(this.__tag_key, tag);
+      return this["interface"].remove(this.__tag_key, tag);
     };
 
     RedisClient.prototype.clear_tags = function() {
-      return this.redis.clear(this.__tag_key);
+      return this["interface"].clear(this.__tag_key);
     };
 
     RedisClient.prototype.tags = function() {
-      return this.redis.members(this.__tag_key);
+      return this["interface"].members(this.__tag_key);
     };
 
     RedisClient.prototype.has_tag = function(tag) {
-      return this.redis.has(this.__tag_key, tag);
+      return this["interface"].has(this.__tag_key, tag);
     };
 
     return RedisClient;
