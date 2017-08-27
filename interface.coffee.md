@@ -5,134 +5,125 @@ RedisInterface
 
     debug = (require 'tangible') 'normal-key:interface'
 
+Default timeout is 24h.
+
+    default_timeout = 24*3600
+
     class RedisInterface
-      constructor: (@redises) ->
+      constructor: (@redis, @__timeout = default_timeout) ->
 
-      timeout: 24*3600
+      timeout: (timeout) ->
+        self = new RedisInterface @redis, timeout
 
-Meta-manipulators
-
-      all: (cb) ->
-        Promise.all @redises.map cb
-
-      multi: (key,cb) ->
-        timeout = @timeout
-        @all (redis) ->
-          cb
-          .call redis.multi()
-          .expire key, timeout
+      multi: seem (op,key,args...) ->
+        result = yield @redis
+          .multi [
+            [op,key,args...]
+            ['expire',key,@__timeout]
+          ]
           .exec()
-          .catch -> yes
-
-      first: seem (cb) ->
-        for redis in @redises
-          try
-            v = yield cb.call redis
-            return v
-        return
+          .catch (err) ->
+            if err.previousErrors?
+              Promise.reject new Error err.previousErrors[0].message
+        result[0][1]
 
 Properties
 ----------
 
-      set: (key,name,value) ->
+      set: (key,name,value,timeout=@__timeout) ->
         if value?
-          @multi key, -> @hset key, name, value
+          @multi 'hset', key, name, value
         else
-          @all (redis) ->
-            redis
-            .hdel key, name
-            .catch -> yes
+          @redis.hdel key, name
 
       get: (key,name) ->
-        @first -> @hget key, name
+        @redis.hget key, name
 
-      incr: (key,property,increment = 1) ->
-        @multi key, -> @hincrby key, property, increment
+      incr: (key,name,increment = 1,timeout = @__timeout) ->
+        @multi 'hincrby', key, name, increment
 
-      mapping: (key) ->
-        @first seem ->
-          result = {}
-          cursor = 0
-          while cursor isnt '0'
-            [cursor,elements] = yield @hscan key, cursor
-            for [k,v] in elements
-              result[k] = v
+      mapping: seem (key) ->
+        result = {}
+        cursor = 0
+        while cursor isnt '0'
+          [cursor,elements] = yield @redis.hscan key, cursor
+          for [k,v] in elements
+            result[k] = v
 
-          result
+        result
 
 Sets
 ----
 
-      add: (key,value) ->
+      add: (key,value,timeout=@__timeout) ->
         return unless value?
-        @multi key, -> @sadd key, value
+        @multi 'sadd', key, value
 
-      remove: (key,value) ->
+      remove: (key,value,timeout=@__timeout) ->
         return unless value?
-        @multi key, -> @srem key, value
+        @multi 'srem', key, value
 
       has: seem (key,value) ->
         return unless value?
-        it = yield @first -> @sismember key, value
+        it = yield @redis.sismember key, value
         if it is 1 then true else false
 
       count: (key) ->
-        @first seem -> parseInt yield @scard key
+        @redis.scard key
 
       members: (key) ->
-        @first -> @smembers key
+        @redis.smembers key
 
       clear: (key) ->
-        @multi key, -> @sinterstore key, "#{key}--emtpy-set--"
+        @redis.sinterstore key, "#{key}--emtpy-set--"
 
-      forEach: (key,cb) ->
-        @first seem ->
-          cursor = 0
-          while cursor isnt '0'
-            [cursor,keys] = yield @sscan key, cursor
-            for key in keys
-              try
-                yield cb key
-              catch error
-                debug.dev "forEach cb on #{key}: #{error.stack ? error}"
-          return
+      forEach: seem (key,cb) ->
+        cursor = 0
+        while cursor isnt '0'
+          [cursor,keys] = foo = yield @redis.sscan key, cursor
+          debug.dev 'forEach', foo
+          for key in keys
+            try
+              yield cb key
+            catch error
+              debug.dev "forEach cb on #{key}: #{error.stack ? error}"
+        return
 
 Sorted Sets
 -----------
 
-      sorted_add: (key,value,score = 0) ->
+      sorted_add: (key,value,score = 0,timeout=@__timeout) ->
         return unless value?
-        @multi key, -> @zadd key, score, value
+        @multi 'zadd', key, score, value
 
-      sorted_incr: (key,value,delta = 1) ->
+      sorted_incr: (key,value,delta = 1,timeout=@__timeout) ->
         return unless value?
-        @multi key, -> @zincrby key, delta, value
+        @multi 'zincrby', key, delta, value
 
-      sorted_remove: (key,value) ->
+      sorted_remove: (key,value,timeout=@__timeout) ->
         return unless value?
-        @multi key, -> @zrem key, value
+        @multi 'zrem', key, value
 
-      score: (key,value) ->
+      score: seem (key,value) ->
         return unless value?
-        @first -> @zscore key, value
+        parseFloat yield @redis.zscore key, value
 
       sorted_count: (key) ->
-        @first -> @zcard key
+        @redis.zcard key
 
-      sorted_forEach: (key,cb) ->
-        @first seem ->
-          cursor = 0
-          while cursor isnt '0'
-            [cursor,values] = yield @zscan key, cursor
+      sorted_forEach: seem (key,cb) ->
+        cursor = 0
+        while cursor isnt '0'
+          [cursor,values] = yield @redis.zscan key, cursor
 
-            while values.length > 1
-              key = values.shift()
-              score = values.shift()
-              try
-                yield cb key, score
-              catch error
-                debug.dev "sorted_forEach cb on #{key}: #{error.stack ? error}"
+          while values.length > 1
+            key = values.shift()
+            score = values.shift()
+            try
+              yield cb key, score
+            catch error
+              debug.dev "sorted_forEach cb on #{key}: #{error.stack ? error}"
 
-          return
+        return
 
     module.exports = RedisInterface
