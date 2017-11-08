@@ -1,6 +1,6 @@
 {
   "name": "normal-key",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Redis client extensions for CCNQ4",
   "scripts": {
     "prepublish": "coffee -c *.coffee.md",
