@@ -80,13 +80,13 @@ Sets
       forEach: seem (key,cb) ->
         cursor = 0
         while cursor isnt '0'
-          [cursor,keys] = foo = yield @redis.sscan key, cursor
+          [cursor,values] = foo = yield @redis.sscan key, cursor
           debug.dev 'forEach', foo
-          for key in keys
+          for value in values
             try
-              yield cb key
+              yield cb value
             catch error
-              debug.dev "forEach cb on #{key}: #{error.stack ? error}"
+              debug.dev "forEach cb on #{value}: #{error.stack ? error}"
         return
 
 Sorted Sets
@@ -117,12 +117,12 @@ Sorted Sets
           [cursor,values] = yield @redis.zscan key, cursor
 
           while values.length > 1
-            key = values.shift()
+            value = values.shift()
             score = values.shift()
             try
-              yield cb key, score
+              yield cb value, score
             catch error
-              debug.dev "sorted_forEach cb on #{key}: #{error.stack ? error}"
+              debug.dev "sorted_forEach cb on #{value}: #{error.stack ? error}"
 
         return
 
