@@ -116,18 +116,18 @@
     };
 
     RedisInterface.prototype.forEach = seem(function*(key, cb) {
-      var cursor, error, foo, i, keys, len, ref, ref1;
+      var cursor, error, foo, i, len, ref, ref1, value, values;
       cursor = 0;
       while (cursor !== '0') {
-        ref = foo = (yield this.redis.sscan(key, cursor)), cursor = ref[0], keys = ref[1];
+        ref = foo = (yield this.redis.sscan(key, cursor)), cursor = ref[0], values = ref[1];
         debug.dev('forEach', foo);
-        for (i = 0, len = keys.length; i < len; i++) {
-          key = keys[i];
+        for (i = 0, len = values.length; i < len; i++) {
+          value = values[i];
           try {
-            yield cb(key);
+            yield cb(value);
           } catch (error1) {
             error = error1;
-            debug.dev("forEach cb on " + key + ": " + ((ref1 = error.stack) != null ? ref1 : error));
+            debug.dev("forEach cb on " + value + ": " + ((ref1 = error.stack) != null ? ref1 : error));
           }
         }
       }
@@ -181,18 +181,18 @@
     };
 
     RedisInterface.prototype.sorted_forEach = seem(function*(key, cb) {
-      var cursor, error, ref, ref1, score, values;
+      var cursor, error, ref, ref1, score, value, values;
       cursor = 0;
       while (cursor !== '0') {
         ref = (yield this.redis.zscan(key, cursor)), cursor = ref[0], values = ref[1];
         while (values.length > 1) {
-          key = values.shift();
+          value = values.shift();
           score = values.shift();
           try {
-            yield cb(key, score);
+            yield cb(value, score);
           } catch (error1) {
             error = error1;
-            debug.dev("sorted_forEach cb on " + key + ": " + ((ref1 = error.stack) != null ? ref1 : error));
+            debug.dev("sorted_forEach cb on " + value + ": " + ((ref1 = error.stack) != null ? ref1 : error));
           }
         }
       }
