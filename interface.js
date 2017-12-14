@@ -120,7 +120,6 @@
       cursor = 0;
       while (cursor !== '0') {
         ref = foo = (yield this.redis.sscan(key, cursor)), cursor = ref[0], values = ref[1];
-        debug.dev('forEach', foo);
         for (i = 0, len = values.length; i < len; i++) {
           value = values[i];
           try {
