@@ -81,7 +81,6 @@ Sets
         cursor = 0
         while cursor isnt '0'
           [cursor,values] = foo = yield @redis.sscan key, cursor
-          debug.dev 'forEach', foo
           for value in values
             try
               yield cb value
