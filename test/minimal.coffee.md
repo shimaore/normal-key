@@ -20,6 +20,7 @@ Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this 
         yield r.del client.__tag_key
       before cleanup
       after cleanup
+      after -> r.end()
 
       it 'should set', ->
         client = new TestClient 'Builder', 'Bob'
