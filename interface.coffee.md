@@ -30,7 +30,7 @@ Default timeout is 24h.
 Properties
 ----------
 
-      set: (key,name,value,timeout=@__timeout) ->
+      set: (key,name,value) ->
         if value?
           @multi 'hset', key, name, value
         else
@@ -39,7 +39,7 @@ Properties
       get: (key,name) ->
         @redis.hget key, name
 
-      incr: (key,name,increment = 1,timeout = @__timeout) ->
+      incr: (key,name,increment = 1) ->
         @multi 'hincrby', key, name, increment
 
       mapping: seem (key) ->
@@ -55,11 +55,11 @@ Properties
 Sets
 ----
 
-      add: (key,value,timeout=@__timeout) ->
+      add: (key,value) ->
         return unless value?
         @multi 'sadd', key, value
 
-      remove: (key,value,timeout=@__timeout) ->
+      remove: (key,value) ->
         return unless value?
         @multi 'srem', key, value
 
@@ -91,15 +91,15 @@ Sets
 Sorted Sets
 -----------
 
-      sorted_add: (key,value,score = 0,timeout=@__timeout) ->
+      sorted_add: (key,value,score = 0) ->
         return unless value?
         @multi 'zadd', key, score, value
 
-      sorted_incr: (key,value,delta = 1,timeout=@__timeout) ->
+      sorted_incr: (key,value,delta = 1) ->
         return unless value?
         @multi 'zincrby', key, delta, value
 
-      sorted_remove: (key,value,timeout=@__timeout) ->
+      sorted_remove: (key,value) ->
         return unless value?
         @multi 'zrem', key, value
 
