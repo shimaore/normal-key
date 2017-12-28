@@ -3,8 +3,8 @@
   "version": "3.0.2",
   "description": "Redis client extensions for CCNQ4",
   "scripts": {
-    "prepublish": "coffee -c *.coffee.md",
-    "pretest": "npm run prepublish",
+    "prepublishOnly": "npm install --only=dev && rm package-lock.json && coffee -c *.coffee.md",
+    "pretest": "npm run prepublishOnly",
     "test": "mocha"
   },
   "repository": {
