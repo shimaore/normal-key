@@ -1,7 +1,7 @@
 Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this test.
 
     seem = require 'seem'
-    (chai = require 'chai').should()
+    ({expect} = chai = require 'chai').should()
 
     describe 'When Redis is running', ->
       Redis = require 'ioredis'
@@ -18,6 +18,7 @@ Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this 
         yield r.del client.__set_key
         yield r.del client.__zset_key
         yield r.del client.__tag_key
+        yield r.del client.__state_key
       before cleanup
       after cleanup
       after -> r.end()
@@ -135,3 +136,34 @@ Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this 
         yield client.sorted_incr 'screwdriver'
         (yield client.score 'hammer').should.equal 0
         (yield client.score 'screwdriver').should.equal 1
+
+      it 'should transition', seem ->
+        client = new  TestClient 'Builder', 'Bob'
+        expect(yield client.state()).to.be.null
+        outcome = yield client.transition_state null, 'new'
+        outcome.should.equal 'OK'
+        (yield client.state()).should.equal 'new'
+        try
+          outcome = yield client.transition_state null, 'new'
+          outcome.should.equal 'OK'
+        catch error
+          error.message.should.equal 'Current value `new` does not match ``.'
+        (yield client.state()).should.equal 'new'
+        yield client.transition_state 'new', 'newer'
+        (yield client.state()).should.equal 'newer'
+        yield client.transition_state 'newer', 'final'
+        (yield client.state()).should.equal 'final'
+        yield client.transition_state 'final', null
+        expect(yield client.state()).to.be.null
+        yield client.transition_state null, 'new'
+        (yield client.state()).should.equal 'new'
+        yield client.transition_state 'new', null
+        expect(yield client.state()).to.be.null
+        yield client.transition_state '', null
+        expect(yield client.state()).to.be.null
+        yield client.transition_state null, null
+        expect(yield client.state()).to.be.null
+        yield client.transition_state null, ''
+        expect(yield client.state()).to.be.null
+        yield client.transition_state '', 'new'
+        (yield client.state()).should.equal 'new'

@@ -11,6 +11,24 @@ Default timeout is 24h.
 
     class RedisInterface
       constructor: (@redis, @__timeout = default_timeout) ->
+        @redis.defineCommand 'transition',
+          numberOfKeys: 1,
+          lua: """
+            local key = KEYS[1]
+            local old_value = ARGV[1]
+            local new_value = ARGV[2]
+            local current_value = redis.call('get',key)
+            if current_value == old_value or (current_value == false and old_value == '')
+            then
+              if new_value == '' then
+                return redis.call('del',key)
+              else
+                return redis.call('setex',key,#{@__timeout},new_value)
+              end
+            else
+              return redis.error_reply('Current value `'..current_value..'` does not match `'..old_value..'`.')
+            end
+          """
 
       timeout: (timeout) ->
         self = new RedisInterface @redis, timeout
@@ -41,6 +59,9 @@ Properties
 
       incr: (key,name,increment = 1) ->
         @multi 'hincrby', key, name, increment
+
+      transition: (key,old_value,new_value) ->
+        @redis.transition key, old_value, new_value
 
       mapping: seem (key) ->
         result = {}

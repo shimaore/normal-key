@@ -13,6 +13,16 @@ This is a base class, meant to be implemented in a child class that adds the `in
         @__set_key = "#{@class_name}-#{@key}-S"
         @__zset_key = "#{@class_name}-#{@key}-Z"
         @__tag_key = "#{@class_name}-#{@key}-T"
+        @__state_key = "#{@class_name}-#{@key}-s"
+
+State
+-----
+
+      transition_state: (old_value,new_value) ->
+        @interface.transition @__state_key, old_value, new_value
+
+      state: ->
+        @interface.redis.get @__state_key
 
 Properties
 ----------
