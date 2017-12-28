@@ -16,7 +16,16 @@
       this.__set_key = this.class_name + "-" + this.key + "-S";
       this.__zset_key = this.class_name + "-" + this.key + "-Z";
       this.__tag_key = this.class_name + "-" + this.key + "-T";
+      this.__state_key = this.class_name + "-" + this.key + "-s";
     }
+
+    RedisClient.prototype.transition_state = function(old_value, new_value) {
+      return this["interface"].transition(this.__state_key, old_value, new_value);
+    };
+
+    RedisClient.prototype.state = function() {
+      return this["interface"].redis.get(this.__state_key);
+    };
 
     RedisClient.prototype.get = function(property) {
       return this["interface"].get(this.__property_key, property);

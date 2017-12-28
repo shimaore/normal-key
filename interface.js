@@ -13,6 +13,10 @@
     function RedisInterface(redis, __timeout) {
       this.redis = redis;
       this.__timeout = __timeout != null ? __timeout : default_timeout;
+      this.redis.defineCommand('transition', {
+        numberOfKeys: 1,
+        lua: "local key = KEYS[1]\nlocal old_value = ARGV[1]\nlocal new_value = ARGV[2]\nlocal current_value = redis.call('get',key)\nif current_value == old_value or (current_value == false and old_value == '')\nthen\n  if new_value == '' then\n    return redis.call('del',key)\n  else\n    return redis.call('setex',key," + this.__timeout + ",new_value)\n  end\nelse\n  return redis.error_reply('Current value `'..current_value..'` does not match `'..old_value..'`.')\nend"
+      });
     }
 
     RedisInterface.prototype.timeout = function(timeout) {
@@ -31,10 +35,7 @@
       return result[0][1];
     });
 
-    RedisInterface.prototype.set = function(key, name, value, timeout) {
-      if (timeout == null) {
-        timeout = this.__timeout;
-      }
+    RedisInterface.prototype.set = function(key, name, value) {
       if (value != null) {
         return this.multi('hset', key, name, value);
       } else {
@@ -46,14 +47,15 @@
       return this.redis.hget(key, name);
     };
 
-    RedisInterface.prototype.incr = function(key, name, increment, timeout) {
+    RedisInterface.prototype.incr = function(key, name, increment) {
       if (increment == null) {
         increment = 1;
       }
-      if (timeout == null) {
-        timeout = this.__timeout;
-      }
       return this.multi('hincrby', key, name, increment);
+    };
+
+    RedisInterface.prototype.transition = function(key, old_value, new_value) {
+      return this.redis.transition(key, old_value, new_value);
     };
 
     RedisInterface.prototype.mapping = seem(function*(key) {
@@ -70,20 +72,14 @@
       return result;
     });
 
-    RedisInterface.prototype.add = function(key, value, timeout) {
-      if (timeout == null) {
-        timeout = this.__timeout;
-      }
+    RedisInterface.prototype.add = function(key, value) {
       if (value == null) {
         return;
       }
       return this.multi('sadd', key, value);
     };
 
-    RedisInterface.prototype.remove = function(key, value, timeout) {
-      if (timeout == null) {
-        timeout = this.__timeout;
-      }
+    RedisInterface.prototype.remove = function(key, value) {
       if (value == null) {
         return;
       }
@@ -132,12 +128,9 @@
       }
     });
 
-    RedisInterface.prototype.sorted_add = function(key, value, score, timeout) {
+    RedisInterface.prototype.sorted_add = function(key, value, score) {
       if (score == null) {
         score = 0;
-      }
-      if (timeout == null) {
-        timeout = this.__timeout;
       }
       if (value == null) {
         return;
@@ -145,12 +138,9 @@
       return this.multi('zadd', key, score, value);
     };
 
-    RedisInterface.prototype.sorted_incr = function(key, value, delta, timeout) {
+    RedisInterface.prototype.sorted_incr = function(key, value, delta) {
       if (delta == null) {
         delta = 1;
-      }
-      if (timeout == null) {
-        timeout = this.__timeout;
       }
       if (value == null) {
         return;
@@ -158,10 +148,7 @@
       return this.multi('zincrby', key, delta, value);
     };
 
-    RedisInterface.prototype.sorted_remove = function(key, value, timeout) {
-      if (timeout == null) {
-        timeout = this.__timeout;
-      }
+    RedisInterface.prototype.sorted_remove = function(key, value) {
       if (value == null) {
         return;
       }
