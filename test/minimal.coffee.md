@@ -1,6 +1,5 @@
 Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this test.
 
-    seem = require 'seem'
     ({expect} = chai = require 'chai').should()
 
     describe 'When Redis is running', ->
@@ -12,13 +11,13 @@ Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this 
       class TestClient extends RedisClient
         interface: i
 
-      cleanup = seem ->
+      cleanup = ->
         client = new TestClient 'Builder', 'Bob'
-        yield r.del client.__property_key
-        yield r.del client.__set_key
-        yield r.del client.__zset_key
-        yield r.del client.__tag_key
-        yield r.del client.__state_key
+        await r.del client.__property_key
+        await r.del client.__set_key
+        await r.del client.__zset_key
+        await r.del client.__tag_key
+        await r.del client.__state_key
       before cleanup
       after cleanup
       after -> r.end()
@@ -27,143 +26,143 @@ Do `docker run -p 127.0.0.1:6379:6379 redis`, for example, before starting this 
         client = new TestClient 'Builder', 'Bob'
         client.set 'age', 35
 
-      it 'should get', seem ->
+      it 'should get', ->
         client = new TestClient 'Builder', 'Bob'
         client.set 'age', 35
-        (yield client.get 'age').should.equal '35'
-        yield client.incr 'age'
-        (yield client.get 'age').should.equal '36'
-        yield client.incr 'age', 7
-        (yield client.get 'age').should.equal '43'
-        yield client.reset 'age'
-        (yield client.get 'age').should.equal '0'
-        yield client.incr 'age', 43
-        (yield client.get 'age').should.equal '43'
-        yield client.set 'age', null
-        chai.expect(yield client.get 'age').to.be.null
-        yield client.incr 'age', 42
-        (yield client.get 'age').should.equal '42'
+        (await client.get 'age').should.equal '35'
+        await client.incr 'age'
+        (await client.get 'age').should.equal '36'
+        await client.incr 'age', 7
+        (await client.get 'age').should.equal '43'
+        await client.reset 'age'
+        (await client.get 'age').should.equal '0'
+        await client.incr 'age', 43
+        (await client.get 'age').should.equal '43'
+        await client.set 'age', null
+        chai.expect(await client.get 'age').to.be.null
+        await client.incr 'age', 42
+        (await client.get 'age').should.equal '42'
 
-      it 'should add tags', seem ->
+      it 'should add tags', ->
         client = new TestClient 'Builder', 'Bob'
-        yield client.add_tag 'hat:yellow'
-        yield client.add_tag 'can-we-do-it:yes'
+        await client.add_tag 'hat:yellow'
+        await client.add_tag 'can-we-do-it:yes'
 
-      it 'should retrieve tags', seem ->
+      it 'should retrieve tags', ->
         client = new TestClient 'Builder', 'Bob'
-        yield client.clear_tags()
-        (yield client.interface.count client.__tag_key).should.equal 0
+        await client.clear_tags()
+        (await client.interface.count client.__tag_key).should.equal 0
 
-        yield client.add_tag 'hat:yellow'
-        yield client.add_tag 'can-we-do-it:yes'
-        (yield client.has_tag 'can-we-do-it:yes').should.be.true
-        (yield client.has_tag 'hat:yellow').should.be.true
-        (yield client.has_tag 'hat:purple').should.be.false
+        await client.add_tag 'hat:yellow'
+        await client.add_tag 'can-we-do-it:yes'
+        (await client.has_tag 'can-we-do-it:yes').should.be.true
+        (await client.has_tag 'hat:yellow').should.be.true
+        (await client.has_tag 'hat:purple').should.be.false
 
-        yield client.add_tags ['hat:blue','builder:true']
-        (yield client.has_tag 'hat:blue').should.be.true
-        (yield client.interface.count client.__tag_key).should.equal 4
-        tags = yield client.tags()
+        await client.add_tags ['hat:blue','builder:true']
+        (await client.has_tag 'hat:blue').should.be.true
+        (await client.interface.count client.__tag_key).should.equal 4
+        tags = await client.tags()
         tags.should.have.length 4
 
-        yield client.del_tag 'hat:red'
-        (yield client.has_tag 'hat:blue').should.be.true
-        (yield client.interface.count client.__tag_key).should.equal 4
-        tags = yield client.tags()
+        await client.del_tag 'hat:red'
+        (await client.has_tag 'hat:blue').should.be.true
+        (await client.interface.count client.__tag_key).should.equal 4
+        tags = await client.tags()
         tags.should.have.length 4
 
-        yield client.del_tag 'hat:blue'
-        (yield client.has_tag 'hat:blue').should.be.false
-        (yield client.interface.count client.__tag_key).should.equal 3
-        tags = yield client.tags()
+        await client.del_tag 'hat:blue'
+        (await client.has_tag 'hat:blue').should.be.false
+        (await client.interface.count client.__tag_key).should.equal 3
+        tags = await client.tags()
         tags.should.have.length 3
 
-        yield client.clear_tags()
-        (yield client.tags()).should.be.empty
-        (yield client.interface.count client.__tag_key).should.equal 0
+        await client.clear_tags()
+        (await client.tags()).should.be.empty
+        (await client.interface.count client.__tag_key).should.equal 0
 
-      it 'should s-insert', seem ->
+      it 'should s-insert', ->
         client = new TestClient 'Builder', 'Bob'
-        yield client.add 'hammer'
-        yield client.add 'hammer'
-        yield client.add 'screwdriver'
+        await client.add 'hammer'
+        await client.add 'hammer'
+        await client.add 'screwdriver'
 
-      it 'should s-count', seem ->
+      it 'should s-count', ->
         client = new TestClient 'Builder', 'Bob'
-        yield client.clear()
-        tools = yield client.count()
+        await client.clear()
+        tools = await client.count()
         tools.should.equal 0
-        yield client.add 'hammer'
-        yield client.add 'hammer'
-        yield client.add 'screwdriver'
-        (yield client.has 'hammer').should.be.true
-        (yield client.has 'screwdriver').should.be.true
-        (yield client.has 'hardhat').should.be.false
-        tools = yield client.count()
+        await client.add 'hammer'
+        await client.add 'hammer'
+        await client.add 'screwdriver'
+        (await client.has 'hammer').should.be.true
+        (await client.has 'screwdriver').should.be.true
+        (await client.has 'hardhat').should.be.false
+        tools = await client.count()
         tools.should.equal 2
-        yield client.add 'hardhat'
-        (yield client.has 'hardhat').should.be.true
-        tools = yield client.count()
+        await client.add 'hardhat'
+        (await client.has 'hardhat').should.be.true
+        tools = await client.count()
         tools.should.equal 3
-        yield client.remove 'hammer'
-        (yield client.has 'hammer').should.be.false
-        (yield client.has 'screwdriver').should.be.true
-        (yield client.has 'hardhat').should.be.true
-        tools = yield client.count()
+        await client.remove 'hammer'
+        (await client.has 'hammer').should.be.false
+        (await client.has 'screwdriver').should.be.true
+        (await client.has 'hardhat').should.be.true
+        tools = await client.count()
         tools.should.equal 2
-        yield client.forEach (x) -> client.remove x
-        tools = yield client.count()
+        await client.forEach (x) -> client.remove x
+        tools = await client.count()
         tools.should.equal 0
 
-      it 'should z-insert', seem ->
+      it 'should z-insert', ->
         client = new TestClient 'Builder', 'Bob'
-        yield client.sorted_add 'hammer'
-        yield client.sorted_add 'hammer'
-        yield client.sorted_add 'screwdriver'
+        await client.sorted_add 'hammer'
+        await client.sorted_add 'hammer'
+        await client.sorted_add 'screwdriver'
 
-      it 'should z-count', seem ->
+      it 'should z-count', ->
         client = new TestClient 'Builder', 'Bob'
-        yield client.sorted_forEach (x) ->
+        await client.sorted_forEach (x) ->
           client.sorted_remove x
-        (yield client.sorted_count()).should.equal 0
-        yield client.sorted_add 'hammer'
-        yield client.sorted_add 'hammer'
-        yield client.sorted_add 'screwdriver'
-        tools = yield r.zcard 'Builder-Bob-Z'
+        (await client.sorted_count()).should.equal 0
+        await client.sorted_add 'hammer'
+        await client.sorted_add 'hammer'
+        await client.sorted_add 'screwdriver'
+        tools = await r.zcard 'Builder-Bob-Z'
         tools.should.equal 2
-        tools = yield client.sorted_count()
+        tools = await client.sorted_count()
         tools.should.equal 2
-        yield client.sorted_incr 'screwdriver'
-        (yield client.score 'hammer').should.equal 0
-        (yield client.score 'screwdriver').should.equal 1
+        await client.sorted_incr 'screwdriver'
+        (await client.score 'hammer').should.equal 0
+        (await client.score 'screwdriver').should.equal 1
 
-      it 'should transition', seem ->
+      it 'should transition', ->
         client = new  TestClient 'Builder', 'Bob'
-        expect(yield client.state()).to.be.null
-        outcome = yield client.transition_state null, 'new'
+        expect(await client.state()).to.be.null
+        outcome = await client.transition_state null, 'new'
         outcome.should.equal 'OK'
-        (yield client.state()).should.equal 'new'
+        (await client.state()).should.equal 'new'
         try
-          outcome = yield client.transition_state null, 'new'
+          outcome = await client.transition_state null, 'new'
           outcome.should.equal 'OK'
         catch error
           error.message.should.equal 'Current value `new` does not match ``.'
-        (yield client.state()).should.equal 'new'
-        yield client.transition_state 'new', 'newer'
-        (yield client.state()).should.equal 'newer'
-        yield client.transition_state 'newer', 'final'
-        (yield client.state()).should.equal 'final'
-        yield client.transition_state 'final', null
-        expect(yield client.state()).to.be.null
-        yield client.transition_state null, 'new'
-        (yield client.state()).should.equal 'new'
-        yield client.transition_state 'new', null
-        expect(yield client.state()).to.be.null
-        yield client.transition_state '', null
-        expect(yield client.state()).to.be.null
-        yield client.transition_state null, null
-        expect(yield client.state()).to.be.null
-        yield client.transition_state null, ''
-        expect(yield client.state()).to.be.null
-        yield client.transition_state '', 'new'
-        (yield client.state()).should.equal 'new'
+        (await client.state()).should.equal 'new'
+        await client.transition_state 'new', 'newer'
+        (await client.state()).should.equal 'newer'
+        await client.transition_state 'newer', 'final'
+        (await client.state()).should.equal 'final'
+        await client.transition_state 'final', null
+        expect(await client.state()).to.be.null
+        await client.transition_state null, 'new'
+        (await client.state()).should.equal 'new'
+        await client.transition_state 'new', null
+        expect(await client.state()).to.be.null
+        await client.transition_state '', null
+        expect(await client.state()).to.be.null
+        await client.transition_state null, null
+        expect(await client.state()).to.be.null
+        await client.transition_state null, ''
+        expect(await client.state()).to.be.null
+        await client.transition_state '', 'new'
+        (await client.state()).should.equal 'new'

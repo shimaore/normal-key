@@ -1,4 +1,0 @@
---compilers coffee.md:coffee-script/register
---require coffee-coverage/register-istanbul
---reporter spec
---recursive

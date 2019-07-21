@@ -4,8 +4,8 @@
   "description": "Redis client extensions for CCNQ4",
   "scripts": {
     "prepublishOnly": "npm install --only=dev && rm package-lock.json && coffee -c *.coffee.md",
-    "pretest": "npm run prepublishOnly",
-    "test": "mocha"
+    "pretest": "npm run prepublishOnly && coffee -c test/*.coffee.md",
+    "test": "nyc mocha"
   },
   "repository": {
     "type": "git",
@@ -14,14 +14,13 @@
   "author": "Stéphane Alnet <stephane@shimaore.net> (https://stephane.shimaore.net/)",
   "license": "Unlicense",
   "dependencies": {
-    "seem": "^2.0.0",
-    "tangible": "^1.9.0"
+    "tangible": "^3.1.0"
   },
   "devDependencies": {
-    "chai": "^4.1.2",
-    "coffee-coverage": "^3.0.0",
-    "coffee-script": "^1.12.7",
-    "ioredis": "^3.2.2",
-    "mocha": "^4.0.1"
+    "chai": "^4.2.0",
+    "coffeescript": "^2.4.1",
+    "ioredis": "^4.11.2",
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1"
   }
 }

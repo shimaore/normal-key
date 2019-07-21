@@ -1,8 +1,6 @@
 RedisInterface
 ==============
 
-    seem = require 'seem'
-
     debug = (require 'tangible') 'normal-key:interface'
 
 Default timeout is 24h.
@@ -33,8 +31,8 @@ Default timeout is 24h.
       timeout: (timeout) ->
         self = new RedisInterface @redis, timeout
 
-      multi: seem (op,key,args...) ->
-        result = yield @redis
+      multi: (op,key,args...) ->
+        result = await @redis
           .multi [
             [op,key,args...]
             ['expire',key,@__timeout]
@@ -63,11 +61,11 @@ Properties
       transition: (key,old_value,new_value) ->
         @redis.transition key, old_value, new_value
 
-      mapping: seem (key) ->
+      mapping: (key) ->
         result = {}
         cursor = 0
         while cursor isnt '0'
-          [cursor,elements] = yield @redis.hscan key, cursor
+          [cursor,elements] = await @redis.hscan key, cursor
           for [k,v] in elements
             result[k] = v
 
@@ -84,9 +82,9 @@ Sets
         return unless value?
         @multi 'srem', key, value
 
-      has: seem (key,value) ->
+      has: (key,value) ->
         return unless value?
-        it = yield @redis.sismember key, value
+        it = await @redis.sismember key, value
         if it is 1 then true else false
 
       count: (key) ->
@@ -98,13 +96,13 @@ Sets
       clear: (key) ->
         @redis.sinterstore key, "#{key}--emtpy-set--"
 
-      forEach: seem (key,cb) ->
+      forEach: (key,cb) ->
         cursor = 0
         while cursor isnt '0'
-          [cursor,values] = foo = yield @redis.sscan key, cursor
+          [cursor,values] = foo = await @redis.sscan key, cursor
           for value in values
             try
-              yield cb value
+              await cb value
             catch error
               debug.dev "forEach cb on #{value}: #{error.stack ? error}"
         return
@@ -124,23 +122,23 @@ Sorted Sets
         return unless value?
         @multi 'zrem', key, value
 
-      score: seem (key,value) ->
+      score: (key,value) ->
         return unless value?
-        parseFloat yield @redis.zscore key, value
+        parseFloat await @redis.zscore key, value
 
       sorted_count: (key) ->
         @redis.zcard key
 
-      sorted_forEach: seem (key,cb) ->
+      sorted_forEach: (key,cb) ->
         cursor = 0
         while cursor isnt '0'
-          [cursor,values] = yield @redis.zscan key, cursor
+          [cursor,values] = await @redis.zscan key, cursor
 
           while values.length > 1
             value = values.shift()
             score = values.shift()
             try
-              yield cb value, score
+              await cb value, score
             catch error
               debug.dev "sorted_forEach cb on #{value}: #{error.stack ? error}"
 
